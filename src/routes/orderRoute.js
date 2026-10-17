@@ -40,7 +40,7 @@ async function insertOrder(data, res){
 
         await connection.commit();
         return res.status(201).json({ 
-            message: "test only post",
+            message: "Successfully added new food.",
             result: orderHeader
         }); 
     } catch (error) {

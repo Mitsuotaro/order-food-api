@@ -6,19 +6,24 @@ const router = express.Router();
 router.get('/foods', async(req, res) => 
     await getFoods(req.query, res)
 )
-
+    
 async function getFoods(params, res){
     try {
-        const result = await pool.query(
-                `SELECT 
+        const result = await pool.query(`
+                SELECT 
                     f.*, 
+                    f.id AS foodID,
+                    fp.price,
+                    f.category_id AS categoryID,
                     fc.description AS categoryDescription,
                     0 as quantity,
                     0 as total
 
                 FROM foods f
-                INNER JOIN food_category fc ON fc.id = f.category`
-            );
+                INNER JOIN food_category fc ON fc.id = f.category_id
+                INNER JOIN food_price fp ON fp.food_id = f.id
+                
+            `);
 
         res.json(result);
     } catch (error) {

@@ -4,9 +4,10 @@ const { z } = require('zod');
 const router = express.Router();
 
 const foodSchema = z.object({
-    description: z.string().trim().min(3).max(100),
+    name: z.string().trim().min(3).max(100),
+    description: z.string().trim().min(3).max(255),
     price: z.number().nonnegative(),
-    category: z.number().int().positive(),
+    categoryID: z.number().int().positive(),
 });
 
 const validate = (schema) => (req, res, next) => {
@@ -23,7 +24,7 @@ const validate = (schema) => (req, res, next) => {
 async function insertFood(data, res){
     let connection;
     try {
-        const { description, price, category } = data;
+        const { name, description, price, categoryID } = data;
 
         connection = await pool.getConnection();
 
@@ -31,16 +32,25 @@ async function insertFood(data, res){
         
         const [result] = await connection.query(`
                 INSERT INTO foods 
-                    (description, price, category, status)
+                    (name, description, category_id, created_by_id, created_date_time, status)
                 VALUES
-                ( ?, ?, ?, ? )
+                ( ?, ?, ?, ?, ?, ? )
             `,
-            [ description, price, category, 1]
+            [ name, description, categoryID, 1, new Date(), 1]
+        );
+
+        await connection.query(`
+                INSERT INTO food_price 
+                    (food_id, price, created_by_id, created_date_time, status)
+                VALUES
+                ( ?, ?, ?, ?, ? )
+            `,
+            [ result.insertId, price, 1, new Date(), 1 ]
         );
 
         await connection.commit();
         return res.status(201).json({ 
-            message: "test only post",
+            message: "Successfully added new food.",
             result: result
         });
     } catch (error) {
