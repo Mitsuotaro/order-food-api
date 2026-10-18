@@ -3,12 +3,20 @@ const { mysqlPromise: pool } = require('../config/db.js');
 const { z } = require('zod');
 const router = express.Router();
 
-const foodSchema = z.object({
+const insertFoodSchema = z.object({
     name: z.string().trim().min(3).max(100),
     description: z.string().trim().min(3).max(255),
     price: z.number().nonnegative(),
     categoryID: z.number().int().positive(),
 });
+
+const updateFoodSchema = insertFoodSchema.extend({
+    foodID: z.int(),
+    status: z.preprocess(
+        (value) => value === 1 ? true : value === 0 ? false : value,
+        z.boolean()
+    )
+})
 
 const validate = (schema) => (req, res, next) => {
     const result = schema.safeParse(req.body);
@@ -61,8 +69,53 @@ async function insertFood(data, res){
     }
 }
 
-router.post('/foods', validate(foodSchema), async(req, res) => 
+async function updateFood(data, res){
+    let connection;
+    try {
+        const { foodID, name, description, price, categoryID, status } = data;
+        
+        connection = await pool.getConnection();
+
+        await connection.beginTransaction();
+        
+        const [ result ] = await connection.query(`
+                UPDATE foods
+                    SET
+                        name = ?,
+                        description = ?,
+                        category_id = ?,
+                        status = ?
+                    WHERE id = ?
+            `,
+            [ name, description, categoryID, status, foodID ]
+        );
+
+        const [ priceResult ] = await connection.query(`
+                SELECT * FROM food_price WHERE food_id = ? AND price = ?
+            `,
+            [ foodID, price ]
+        );
+
+        // await connection.commit();
+        return res.status(201).json({ 
+            message: "Successfully added new food.",
+            priceResult: priceResult,
+            result: result,
+        });
+    } catch (error) {
+        if(!connection) await connection.rollback();
+        return res.status(500).json({ error: error.message });
+    } finally {
+        if(!connection) await connection.release();
+    }
+}
+
+router.post('/food', validate(insertFoodSchema), async(req, res) => 
     await insertFood(req.body, res)
+);
+
+router.put('/food',  validate(updateFoodSchema), async(req, res) => 
+    await updateFood(req.body, res)
 );
 
 module.exports = router;
