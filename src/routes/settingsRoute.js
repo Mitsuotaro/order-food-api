@@ -78,29 +78,63 @@ async function updateFood(data, res){
 
         await connection.beginTransaction();
         
-        const [ result ] = await connection.query(`
-                UPDATE foods
-                    SET
-                        name = ?,
-                        description = ?,
-                        category_id = ?,
-                        status = ?
-                    WHERE id = ?
-            `,
-            [ name, description, categoryID, status, foodID ]
-        );
+        // const [ result ] = await connection.query(`
+        //         UPDATE foods
+        //             SET
+        //                 name = ?,
+        //                 description = ?,
+        //                 category_id = ?,
+        //                 status = ?
+        //             WHERE id = ?
+        //     `,
+        //     [ name, description, categoryID, status, foodID ]
+        // );
 
         const [ priceResult ] = await connection.query(`
-                SELECT * FROM food_price WHERE food_id = ? AND price = ?
+                SELECT 
+                    * 
+                
+                FROM food_price 
+                    INNER JOIN (
+                        SELECT 
+                            MAX(id) as latest_price_id,
+                            food_id
+                        FROM food_price 
+                        WHERE food_id = ?
+                            AND Status = ?
+                        GROUP BY food_id
+                    ) AS latest ON latest.food_id = food_price.id
+                WHERE food_id = ? 
+                    AND Status = ?
             `,
-            [ foodID, price ]
+            [ foodID, price, 1 ]
         );
 
-        // await connection.commit();
+        // if(priceResult.length <= 0){
+        //     await connection.query(`
+        //         UPDATE food_price
+        //             SET 
+        //                 status = ?
+        //             WHERE food_id = ?
+        //                 AND status = ?
+                
+        //     `);
+
+        //     await connection.query(`
+        //         INSERT INTO food_price 
+        //             (food_id, price, created_by_id, created_date_time, status)
+        //         VALUES
+        //         ( ?, ?, ?, ?, ? )
+        //     `,
+        //         [ foodID, price, 1, new Date(), 1]
+        //     );
+        // }
+
+        await connection.commit();
         return res.status(201).json({ 
-            message: "Successfully added new food.",
+            message: `Successfully updated ${name}`,
             priceResult: priceResult,
-            result: result,
+            // result: result,
         });
     } catch (error) {
         if(!connection) await connection.rollback();
