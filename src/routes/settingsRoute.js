@@ -96,7 +96,7 @@ async function updateFood(data, res){
             [ foodID, price ]
         );
 
-        // await connection.commit();
+        await connection.commit();
         return res.status(201).json({ 
             message: "Successfully added new food.",
             priceResult: priceResult,
