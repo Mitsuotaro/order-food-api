@@ -94,20 +94,25 @@ async function updateFood(data, res){
                 SELECT 
                     * 
                 
-                FROM food_price 
+                FROM food_price fp
                     INNER JOIN (
+
                         SELECT 
-                            MAX(id) as latest_price_id,
-                            food_id
-                        FROM food_price 
-                        WHERE food_id = ?
-                            AND Status = ?
-                        GROUP BY food_id
-                    ) AS latest ON latest.food_id = food_price.id
-                WHERE food_id = ? 
-                    AND Status = ?
+                            MAX(latest_fp.id) as latest_price_id,
+                            latest_fp.food_id
+
+                        FROM food_price latest_fp
+                        WHERE latest_fp.food_id = ?
+                            AND latest_fp.Status = ?
+
+                        GROUP BY latest_fp.food_id
+
+                    ) AS latest ON latest.food_id = fp.id
+
+                WHERE fp.food_id = ? 
+                    AND fp.Status = ?
             `,
-            [ foodID, price, 1 ]
+            [ foodID, price, 1, 1 ]
         );
 
         // if(priceResult.length <= 0){
