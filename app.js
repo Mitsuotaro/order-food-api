@@ -8,15 +8,21 @@ const settingsRoute = require('./src/routes/settingsRoute.js');
 const menuRoute = require('./src/routes/menuRoute.js');
 const orderRoute = require('./src/routes/orderRoute.js');
 
+const foodsRoute = require('./src/modules/foods/foods.route.js');
+
 app.use(cors({
     origin: `http://localhost:${port}`,
 }));
 
 app.use(express.json());
 
+
+
 app.use('/', settingsRoute);
-app.use('/', menuRoute);
+// app.use('/', menuRoute);
 app.use('/', orderRoute);
+
+app.use('/foods', foodsRoute);
 
 app.get('/', (req, res) => {
     res.send(`Hello World!`);

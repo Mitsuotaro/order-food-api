@@ -1,33 +1,21 @@
 const express = require('express');
 const { mysqlPromise: pool } = require('../config/db.js');
-const { z } = require('zod');
 const router = express.Router();
 
-const insertFoodSchema = z.object({
-    name: z.string().trim().min(3).max(100),
-    description: z.string().trim().min(3).max(255),
-    price: z.number().nonnegative(),
-    categoryID: z.number().int().positive(),
-});
+const { validate } = require("../middlewares/schemaValidation.js");
 
-const updateFoodSchema = insertFoodSchema.extend({
-    foodID: z.int(),
-    status: z.preprocess(
-        (value) => value === 1 ? true : value === 0 ? false : value,
-        z.boolean()
-    )
-})
+const {
+    insertFoodSchema,
+    updateFoodSchema
+} = require("../schemas/foodsSchema");
 
-const validate = (schema) => (req, res, next) => {
-    const result = schema.safeParse(req.body);
+router.post('/food', validate(insertFoodSchema), async(req, res) => 
+    await insertFood(req.body, res)
+);
 
-    if(!result.success){
-        return res.status(400).json({ errors: result.error.issues });
-    }
-
-    req.body = result.data;
-    next();
-}
+router.put('/food',  validate(updateFoodSchema), async(req, res) => 
+    await updateFood(req.body, res)
+);
 
 async function insertFood(data, res){
     let connection;
@@ -67,6 +55,11 @@ async function insertFood(data, res){
     } finally {
         if(!connection) await connection.release();
     }
+}
+
+async function getFoodPrice()
+{
+
 }
 
 async function updateFood(data, res){
@@ -135,7 +128,7 @@ async function updateFood(data, res){
         //     );
         // }
 
-        await connection.commit();
+        // await connection.commit();
         return res.status(201).json({ 
             message: `Successfully updated ${name}`,
             priceResult: priceResult,
@@ -148,13 +141,5 @@ async function updateFood(data, res){
         if(!connection) await connection.release();
     }
 }
-
-router.post('/food', validate(insertFoodSchema), async(req, res) => 
-    await insertFood(req.body, res)
-);
-
-router.put('/food',  validate(updateFoodSchema), async(req, res) => 
-    await updateFood(req.body, res)
-);
 
 module.exports = router;
