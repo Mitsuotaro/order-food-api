@@ -12,10 +12,16 @@ const getFoods = async(filters) => {
     // 0 as quantity,
     // 0 as total
     
-    return foods;
+    return formatted;
+}
+
+const updateFood = async(filters) => {
+    const updated = await foodsRepository.updateFood(filters);
+    return updated;
 }
 
 
 module.exports = {
-    getFoods
+    getFoods,
+    updateFood,
 };

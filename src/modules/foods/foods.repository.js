@@ -5,16 +5,14 @@ async function getFoods(){
             SELECT 
                 f.id AS foodID,
                 f.name as foodName,
-                fp.price,
+                f.price as foodPrice,
                 f.description as foodDescription,
                 f.category_id as categoryID,
                 f.status as foodStatus,
-                f.price as foodPrice,
                 fc.description AS categoryDescription
 
             FROM foods f
             INNER JOIN food_category fc ON fc.id = f.category_id
-            INNER JOIN food_price fp ON fp.food_id = f.id
             
             WHERE f.status = ?
         `, [
@@ -25,7 +23,7 @@ async function getFoods(){
 };
 
 async function updateFood(){
-    await pool.query(`
+    const response = await pool.query(`
         UPDATE foods
             SET 
                 name = ?,
@@ -36,6 +34,15 @@ async function updateFood(){
 
             WHERE id = ?
     `);
+
+    console.log("updateFood: ", response);
+
+    return response;
+}
+
+module.exports = {
+    getFoods,
+    updateFood,
 }
 
 // export const findAll = async ({
@@ -94,7 +101,3 @@ async function updateFood(){
 //     return rows;
 // };
 
-
-module.exports = {
-    getFoods,
-}

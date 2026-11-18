@@ -18,6 +18,23 @@ const getFoods = async(req, res) => {
     }
 };
 
+const updateFood = async(req, res) => {
+    try {
+        const filters = {
+            foodID: req.params.foodID,
+        };
+
+        const updated = await foodsService.udpateFood(filters);
+
+        return res.status(200).json({
+            data: foods,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 module.exports = {
-    getFoods
+    getFoods,
+    updateFood
 };
